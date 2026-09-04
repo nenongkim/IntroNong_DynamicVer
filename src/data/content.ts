@@ -23,10 +23,11 @@ export const navLinks = ['Profile', 'Experience', 'Vision', 'Contact'] as const;
 
 export const hero = {
   title: 'Yewon Kim',
-  left: '데이터로 서비스의 방향을 설계하고, 사람의 목소리를 듣는 MIS 학생입니다.',
+  left: '데이터로 서비스를 설계하고, 사람의 목소리를 듣는 사람',
   right: 'Data-driven service planning · Database modeling · Deep learning · Mixed reality',
   primaryCta: 'Explore my journey',
   secondaryCta: 'Download CV',
+  scrollHint: 'scroll to dive in',
 } as const;
 
 export const researchInterests = [

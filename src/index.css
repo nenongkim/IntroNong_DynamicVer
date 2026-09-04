@@ -1,24 +1,18 @@
-@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Barlow:wght@300;400;500;600&display=swap');
-
-@font-face {
-  font-family: 'Dirtyline';
-  src: url('https://fonts.cdnfonts.com/s/15011/Dirtyline36DaysofType.woff') format('woff');
-  font-weight: normal;
-  font-style: normal;
-  font-display: swap;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 body {
-  font-family: 'Barlow', sans-serif;
-  background: #000;
+  font-family: 'Pretendard Variable', Pretendard, Inter, system-ui, sans-serif;
+  background: #0C447C; /* 영상 로딩 전 딥오션 */
   margin: 0;
+  -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- Liquid glass ---------- */
+/* ---------- Liquid glass (레퍼런스 기법) ---------- */
 .liquid-glass {
   background: rgba(255, 255, 255, 0.01);
   background-blend-mode: luminosity;
@@ -81,13 +75,31 @@ body {
   pointer-events: none;
 }
 
-/* ---------- Hero title ---------- */
+/* ---------- Hero title (기획서 §2 타이포) ---------- */
 .hero-title {
-  font-family: 'Instrument Serif', serif;
-  font-style: italic;
-  font-size: clamp(96px, 18vw, 280px);
-  line-height: 0.92;
-  letter-spacing: -0.02em;
-  color: white;
+  font-family: 'Inter', 'Pretendard Variable', Pretendard, sans-serif;
+  font-weight: 600;
+  font-size: clamp(3.4rem, 9vw, 9.5rem);
+  line-height: 0.95;
+  letter-spacing: -0.035em;
+  color: #E6F1FB;
   text-align: center;
+  text-shadow: 0 12px 40px rgba(0, 20, 50, 0.45);
+}
+
+/* ---------- Dolphin (근경 레이어) ---------- */
+.dolphin-layer {
+  filter: drop-shadow(0 28px 34px rgba(0, 12, 40, 0.55)) drop-shadow(0 4px 8px rgba(0, 12, 40, 0.3));
+  will-change: transform;
+}
+
+/* ---------- Scroll hint ---------- */
+@keyframes hint-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(6px); }
+}
+.hint-bounce { animation: hint-bounce 2s ease-in-out infinite; }
+
+@media (prefers-reduced-motion: reduce) {
+  .hint-bounce { animation: none; }
 }
