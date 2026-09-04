@@ -1,0 +1,695 @@
+/* =========================================================
+   styles.css — 김예원 인터랙티브 포트폴리오
+   원칙: JS는 :root의 CSS 변수만 쓴다. transform/opacity는
+   전부 이 파일에서 변수를 읽어 그린다.
+   ========================================================= */
+
+/* ---------- 0. Design tokens ---------- */
+:root {
+  --sky-50:  #E6F1FB;
+  --sky-100: #B5D4F4;
+  --sky-200: #85B7EB;
+  --sky-400: #378ADD;
+  --sky-800: #0C447C;
+  --lime:    #E8F97A;
+
+  --ink: var(--sky-800);
+  --ink-soft: rgba(12, 68, 124, 0.72);
+  --ink-faint: rgba(12, 68, 124, 0.45);
+  --line: rgba(12, 68, 124, 0.16);
+
+  --font-kr: "Pretendard Variable", Pretendard, -apple-system, BlinkMacSystemFont, system-ui, sans-serif;
+  --font-en: Inter, "Pretendard Variable", Pretendard, system-ui, sans-serif;
+
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  /* 전체 스크롤 길이(stage 위 추가 높이). JS가 이 값을 읽는다. */
+  --S: 4000px;
+
+  /* ---- JS가 매 프레임 갱신하는 변수 (기본값) ---- */
+  --mx: 0;            /* 커서 x  -0.5 ~ 0.5 (lerp) */
+  --my: 0;            /* 커서 y  -0.5 ~ 0.5 (lerp) */
+  --bg: var(--sky-50);
+  --depth: 0;         /* 0 수면 ~ 1 깊음 */
+
+  --s1: 1; --s2: 0; --s3: 0; --s4: 0; --s5: 0;   /* 씬 활성도 0~1 */
+  --s1-exit: 0;       /* Scene 1 타이틀 퇴장 진행도 */
+  --s2-in: 0;         /* Scene 2 건물 진입 진행도 */
+  --s5-in: 0;         /* Scene 5 돌고래 원경 진행도 */
+
+  --dolphin-x: 50;    /* vw */
+  --dolphin-y: 58;    /* vh */
+  --dolphin-rot: 0;   /* deg */
+  --dolphin-scale: 1;
+  --dolphin-op: 1;
+  --dolphin-flip: 1;  /* 1 = 왼쪽을 향함(기본 에셋 방향), -1 = 오른쪽 */
+  --dolphin-back: 0;  /* 0 측면 ~ 1 뒷모습 */
+  --dolphin-ox: 0;    /* 섬 방문 시 GSAP이 트윈하는 px 오프셋 */
+  --dolphin-oy: 0;
+  --dolphin-cx: 0;    /* 커서 추종 오프셋(vw) */
+  --dolphin-cy: 0;    /* 커서 추종 오프셋(vh) */
+}
+
+/* ---------- 1. Base ---------- */
+*, *::before, *::after { box-sizing: border-box; }
+
+html { scroll-behavior: auto; -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  font-family: var(--font-kr);
+  font-weight: 400;
+  line-height: 1.7;
+  color: var(--ink);
+  background: var(--sky-50);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+}
+
+body.is-locked { overflow: hidden; }
+
+h1, h2, h3, p, ul, ol { margin: 0; }
+ul.plain, ul.pills { list-style: none; padding: 0; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; }
+a { color: inherit; text-decoration: none; }
+img { display: block; max-width: 100%; }
+
+:focus-visible { outline: 2px solid var(--sky-800); outline-offset: 4px; border-radius: 4px; }
+
+.eyebrow {
+  font-family: var(--font-en);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--sky-400);
+  margin-bottom: 0.5rem;
+}
+
+/* ---------- 2. Nav ---------- */
+.nav {
+  position: fixed;
+  inset: 0 0 auto 0;
+  z-index: 50;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 22px 32px;
+  font-family: var(--font-en);
+  color: var(--ink);
+  pointer-events: none;
+  transition: color 0.4s ease;
+}
+.nav > * { pointer-events: auto; }
+.nav__logo { font-weight: 600; font-size: 0.95rem; letter-spacing: 0.01em; }
+.nav__menu { display: flex; gap: 28px; }
+.nav__menu button {
+  font-size: 0.78rem;
+  font-weight: 500;
+  letter-spacing: 0.06em;
+  opacity: 0.72;
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+  transition: opacity 0.25s ease, border-color 0.25s ease;
+}
+.nav__menu button:hover, .nav__menu button.is-current { opacity: 1; border-bottom-color: currentColor; }
+
+/* 짙은 배경 씬에서 자동 반전 (현재 팔레트 최대 깊이 sky-200에선 반전 없음, 훅만 준비) */
+body[data-theme="deep"] .nav { color: var(--sky-50); }
+
+/* ---------- 3. Cinema / Stage ---------- */
+.cinema {
+  position: relative;
+  height: calc(100vh + var(--S));
+  height: calc(100svh + var(--S));
+}
+
+.stage {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  height: 100svh;
+  overflow: hidden;
+  background: var(--bg);
+  /* JS가 --bg를 매 프레임 쓰므로 transition은 걸지 않는다 */
+}
+
+.fx {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.layer { position: absolute; inset: 0; pointer-events: none; }
+.layer--far {
+  transform: translate(calc(var(--mx) * -8px), calc(var(--my) * -24px));
+}
+.surface-line {
+  position: absolute;
+  left: 0; right: 0;
+  top: 11vh;
+  height: 1px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: 0 0 24px 6px rgba(255, 255, 255, 0.35);
+  opacity: calc(var(--s1) * 0.9 + var(--s4) * 0.5 + var(--s5) * 0.7);
+}
+
+/* ---------- 4. Scenes (공통) ---------- */
+.scene {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.scene.is-active { pointer-events: auto; }
+.scene--1 { opacity: var(--s1); }
+.scene--2 { opacity: var(--s2); }
+.scene--3 { opacity: var(--s3); }
+.scene--4 { opacity: var(--s4); }
+.scene--5 { opacity: var(--s5); }
+
+/* 텍스트 등장: 0.8s ease-out, 순차 0.2s */
+.reveal {
+  opacity: 0;
+  transform: translateY(20px);
+  transition: opacity 0.8s ease-out, transform 0.8s ease-out;
+  transition-delay: calc(var(--i, 0) * 0.2s);
+}
+.scene.is-active .reveal { opacity: 1; transform: translateY(0); }
+
+/* ---------- 5. Scene 1 · Opening ---------- */
+.hero {
+  position: absolute;
+  left: 50%;
+  top: 34%;
+  width: min(92vw, 1100px);
+  text-align: center;
+  transform:
+    translate(-50%, -50%)
+    translateY(calc(var(--s1-exit) * -180px))
+    scale(calc(1 - var(--s1-exit) * 0.08));
+  opacity: calc(1 - var(--s1-exit));
+  will-change: transform, opacity;
+}
+.hero__name {
+  font-family: var(--font-en);
+  font-size: clamp(3rem, 8vw, 9rem);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -0.03em;
+  color: var(--sky-800);
+}
+.hero__sub {
+  margin-top: 1.25rem;
+  font-family: var(--font-en);
+  font-size: clamp(0.85rem, 1.2vw, 1.05rem);
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  color: var(--ink-soft);
+}
+.hero__tag {
+  margin: 0.6rem auto 0;
+  max-width: 560px;
+  font-size: clamp(0.95rem, 1.3vw, 1.1rem);
+  color: var(--ink);
+}
+
+.scroll-hint {
+  position: absolute;
+  left: 50%;
+  bottom: 34px;
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-en);
+  font-size: 0.7rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--ink-faint);
+  opacity: calc(1 - var(--s1-exit) * 2);
+}
+.scroll-hint svg { animation: hint-bounce 2s ease-in-out infinite; }
+@keyframes hint-bounce {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(6px); }
+}
+
+/* ---------- 6. Scene 2 · Education & Research ---------- */
+.building {
+  position: absolute;
+  left: 4vw;
+  bottom: 0;
+  width: clamp(260px, 36vw, 560px);
+  transform-origin: bottom left;
+  transform:
+    translate(calc(var(--mx) * 14px), 0)
+    scale(calc(0.72 + var(--s2-in) * 0.28));
+  will-change: transform;
+}
+.building__svg { width: 100%; height: auto; display: block; }
+.win {
+  fill: var(--sky-50);
+  opacity: 0.22;
+  transition: fill 0.35s ease, opacity 0.35s ease;
+}
+.win.lit { fill: var(--lime); opacity: 1; }
+
+.card {
+  background: rgba(230, 241, 251, 0.84);
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+}
+.card--edu {
+  position: absolute;
+  right: 6vw;
+  top: 50%;
+  width: min(520px, 44vw);
+  padding: 30px 34px;
+  transform:
+    translateY(-50%)
+    translate(calc(var(--mx) * -16px), calc(var(--my) * -16px));
+  will-change: transform;
+}
+.card__block + .card__block { margin-top: 1.4rem; padding-top: 1.4rem; border-top: 1px solid var(--line); }
+.card__title { font-weight: 600; font-size: 1.05rem; }
+.card__gpa { margin-top: 0.35rem; color: var(--ink-soft); }
+.card__gpa strong { color: var(--ink); font-weight: 600; }
+.card p { font-size: 0.93rem; }
+
+.research__role { font-weight: 600; }
+.research__org  { font-size: 0.93rem; }
+.research__unit { font-size: 0.8rem; color: var(--ink-soft); line-height: 1.5; margin-top: 0.15rem; }
+.research__period {
+  font-family: var(--font-en);
+  font-size: 0.75rem;
+  letter-spacing: 0.04em;
+  color: var(--sky-400);
+  margin-bottom: 0.2rem;
+}
+
+.pills { display: flex; flex-wrap: wrap; gap: 8px; }
+.pills li {
+  font-size: 0.78rem;
+  line-height: 1.3;
+  padding: 6px 11px;
+  border: 1px solid var(--sky-200);
+  border-radius: 999px;
+  background: rgba(181, 212, 244, 0.35);
+  color: var(--ink);
+}
+
+/* ---------- 7. Scene 3 · Islands ---------- */
+.scene3__hint {
+  position: absolute;
+  left: 0; right: 0;
+  top: 12vh;
+  text-align: center;
+  font-size: 0.9rem;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+.scene3__hint span { font-family: var(--font-en); font-size: 0.78rem; letter-spacing: 0.06em; }
+
+.islands {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  align-items: end;
+  padding: 0 5vw 6vh;
+  gap: 2vw;
+  transform: translate(calc(var(--mx) * 20px), calc(var(--my) * 10px));
+  will-change: transform;
+}
+.island {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 8px 20px;
+  border-radius: 20px;
+  transition: transform 0.5s var(--ease-out);
+}
+.island:nth-child(1) { margin-bottom: 14vh; }
+.island:nth-child(2) { margin-bottom: 4vh; }
+.island:nth-child(3) { margin-bottom: 18vh; }
+.island:hover, .island:focus-visible { transform: translateY(-8px) scale(1.03); }
+.island__img { width: min(100%, 300px); height: auto; }
+.island__label {
+  font-family: var(--font-en);
+  font-weight: 600;
+  font-size: clamp(0.85rem, 1.15vw, 1rem);
+  letter-spacing: 0.01em;
+  color: var(--ink);
+}
+.island__label-ko { display: block; font-family: var(--font-kr); font-weight: 400; font-size: 0.78rem; color: var(--ink-soft); margin-top: 2px; }
+.island__count {
+  font-family: var(--font-en);
+  font-size: 0.72rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-faint);
+}
+.island__dot {
+  position: absolute;
+  top: 10px; right: 14px;
+  width: 9px; height: 9px;
+  border-radius: 50%;
+  background: transparent;
+  border: 1px solid var(--line);
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s var(--ease-out);
+}
+.island.is-visited .island__dot { background: var(--lime); border-color: var(--sky-400); transform: scale(1.15); }
+.island.is-target { transform: translateY(-8px) scale(1.06); }
+
+/* ---------- 8. Scene 4 · Vision ---------- */
+.vision {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  width: min(92vw, 640px);
+}
+.vision__head {
+  font-family: var(--font-en);
+  font-size: clamp(2rem, 5vw, 4.5rem);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  line-height: 1.05;
+  margin-bottom: 2rem;
+}
+.vision__lines { list-style: none; padding: 0; counter-reset: vision; max-width: 560px; }
+.vision__lines li {
+  counter-increment: vision;
+  position: relative;
+  padding-left: 2.4rem;
+  font-size: clamp(1rem, 1.4vw, 1.2rem);
+  color: var(--ink);
+}
+.vision__lines li + li { margin-top: 1rem; }
+.vision__lines li::before {
+  content: "0" counter(vision);
+  position: absolute;
+  left: 0; top: 0.35em;
+  font-family: var(--font-en);
+  font-size: 0.72rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--sky-400);
+}
+
+/* ---------- 9. Scene 5 · Ending ---------- */
+.ending {
+  position: absolute;
+  left: 50%;
+  top: 42%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  width: min(92vw, 720px);
+}
+.ending__ko { font-size: clamp(1.05rem, 1.6vw, 1.35rem); color: var(--ink); }
+.ending__en {
+  margin-top: 0.75rem;
+  font-family: var(--font-en);
+  font-size: clamp(2.4rem, 6vw, 5.5rem);
+  font-weight: 600;
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.contact {
+  position: absolute;
+  left: 0; right: 0; bottom: 0;
+  padding: 22px 32px 18px;
+  border-top: 1px solid var(--line);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.contact__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 14px 28px;
+  font-family: var(--font-en);
+  font-size: 0.9rem;
+}
+.contact__link { border-bottom: 1px solid var(--line); transition: border-color 0.25s ease; }
+.contact__link:hover { border-bottom-color: var(--ink); }
+.contact__credit { font-family: var(--font-en); font-size: 0.72rem; letter-spacing: 0.04em; color: var(--ink-faint); }
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-weight: 600;
+  font-size: 0.85rem;
+  letter-spacing: 0.02em;
+  transition: transform 0.3s var(--ease-out), box-shadow 0.3s ease;
+  margin-left: auto;
+}
+.btn--lime { background: var(--lime); color: var(--sky-800); }
+.btn--lime:hover { transform: translateY(-2px); box-shadow: 0 8px 20px -10px rgba(12, 68, 124, 0.45); }
+
+/* ---------- 10. Dolphin ---------- */
+.dolphin {
+  position: absolute;
+  left: 0; top: 0;
+  width: clamp(150px, 22vw, 320px);
+  pointer-events: none;
+  z-index: 5;
+  transform:
+    translate(
+      calc((var(--dolphin-x) + var(--dolphin-cx)) * 1vw + var(--dolphin-ox) * 1px - 50%),
+      calc((var(--dolphin-y) + var(--dolphin-cy)) * 1vh + var(--dolphin-oy) * 1px - 50%)
+    )
+    rotate(calc(var(--dolphin-rot) * 1deg))
+    scale(var(--dolphin-scale))
+    scaleX(var(--dolphin-flip));
+  opacity: var(--dolphin-op);
+  will-change: transform, opacity;
+}
+.dolphin img { width: 100%; height: auto; position: absolute; left: 0; top: 0; }
+.dolphin__side { position: relative !important; opacity: calc(1 - var(--dolphin-back)); }
+.dolphin__back {
+  width: 62% !important;
+  left: 19% !important;
+  top: -30% !important;
+  opacity: var(--dolphin-back);
+}
+
+/* ---------- 11. Island panel (overlay) ---------- */
+.panel {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: 4vh 4vw;
+}
+.panel[hidden] { display: none; }
+.panel:not([hidden]) .panel__backdrop { animation: panel-fade 0.4s ease both; }
+.panel:not([hidden]) .panel__sheet { animation: sheet-in 0.5s var(--ease-out) both; }
+.panel.is-closing .panel__backdrop { animation: panel-fade 0.28s ease reverse both; }
+.panel.is-closing .panel__sheet { animation: sheet-out 0.28s ease-in both; }
+@keyframes panel-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes sheet-in  { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: none; } }
+@keyframes sheet-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: translateY(16px); } }
+.panel__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 68, 124, 0.42);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.panel__sheet {
+  position: relative;
+  width: min(940px, 100%);
+  max-height: 92vh;
+  display: flex;
+  flex-direction: column;
+  background: var(--sky-50);
+  border-radius: 22px;
+  border: 1px solid var(--line);
+  box-shadow: 0 30px 80px -30px rgba(12, 68, 124, 0.55);
+  overflow: hidden;
+}
+.panel__head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  padding: 26px 30px 12px;
+}
+.panel__title { font-family: var(--font-en); font-weight: 600; font-size: clamp(1.3rem, 2.2vw, 1.8rem); letter-spacing: -0.01em; line-height: 1.15; }
+.panel__close {
+  flex: none;
+  width: 40px; height: 40px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  transition: background 0.25s ease;
+}
+.panel__close:hover { background: var(--sky-100); }
+
+/* Slider */
+.slider { display: flex; flex-direction: column; min-height: 0; }
+.slider__viewport { overflow: hidden; padding: 10px 30px 6px; cursor: grab; touch-action: pan-y; }
+.slider__viewport.is-dragging { cursor: grabbing; }
+.slider__track {
+  list-style: none; padding: 0; margin: 0;
+  display: flex;
+  transition: transform 640ms cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
+}
+.slider__track.no-transition { transition: none; }
+.xcard {
+  flex: 0 0 100%;
+  padding: 0 4px;
+  user-select: none;
+}
+.xcard__inner {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 24px 26px;
+  min-height: 250px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+.xcard__meta { font-family: var(--font-en); font-size: 0.75rem; letter-spacing: 0.04em; color: var(--sky-400); }
+.xcard__title { font-weight: 600; font-size: 1.05rem; line-height: 1.4; }
+.xcard__rows { display: grid; grid-template-columns: 84px 1fr; gap: 8px 16px; font-size: 0.9rem; }
+.xcard__key { font-family: var(--font-en); font-size: 0.72rem; font-weight: 600; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-faint); padding-top: 4px; }
+.xcard__badge {
+  align-self: flex-start;
+  margin-top: auto;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  background: var(--sky-100);
+  color: var(--sky-800);
+  font-family: var(--font-en);
+  font-weight: 600;
+  font-size: 0.78rem;
+  letter-spacing: 0.02em;
+}
+.xcard__badge::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: var(--sky-400); }
+
+.slider__controls {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 18px;
+  padding: 10px 30px 24px;
+  font-family: var(--font-en);
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+}
+.slider__btn {
+  width: 38px; height: 38px;
+  display: grid; place-items: center;
+  border-radius: 50%;
+  border: 1px solid var(--line);
+  transition: background 0.25s ease, opacity 0.25s ease;
+}
+.slider__btn:hover:not(:disabled) { background: var(--sky-100); }
+.slider__btn:disabled { opacity: 0.3; cursor: default; }
+
+/* ---------- 12. Responsive ---------- */
+@media (max-width: 900px) {
+  .card--edu { width: min(520px, 54vw); right: 4vw; padding: 24px 26px; }
+  .building { width: clamp(220px, 40vw, 420px); }
+}
+
+@media (max-width: 720px) {
+  .nav { padding: 14px 16px; }
+  .nav__logo { font-size: 0.85rem; }
+  .nav__menu { gap: 12px; }
+  .nav__menu button { font-size: 0.68rem; letter-spacing: 0.03em; }
+
+  .hero { top: 38%; }
+  .hero__name { font-size: clamp(2.6rem, 14vw, 4.5rem); }
+
+  .dolphin { width: clamp(120px, 34vw, 200px); }
+
+  /* Scene 2: 건물은 배경으로, 카드는 하단 시트처럼 */
+  .building { left: -6vw; width: 70vw; opacity: 0.55; }
+  .card--edu {
+    right: 5vw; left: 5vw;
+    top: auto; bottom: 6vh;
+    width: auto;
+    max-height: 62vh;
+    overflow: auto;
+    padding: 20px 22px;
+    transform: none;
+    z-index: 6; /* 돌고래(z 5) 위 */
+  }
+  .card p { font-size: 0.88rem; }
+
+  /* Scene 3: 섬 세로 3단 */
+  .scene3__hint { top: 9vh; font-size: 0.82rem; white-space: normal; padding: 0 6vw; }
+  .islands {
+    grid-template-columns: 1fr;
+    align-items: center;
+    align-content: center;
+    padding: 16vh 8vw 8vh;
+    gap: 0;
+    transform: none;
+  }
+  .island { flex-direction: row; justify-content: flex-start; gap: 14px; padding: 8px 12px; text-align: left; }
+  .island:nth-child(n) { margin-bottom: 0; }
+  .island__img { width: 34vw; max-width: 160px; }
+  .island__label { font-size: 0.95rem; }
+  .island__dot { top: 50%; transform: translateY(-50%); right: 8px; }
+  .island.is-visited .island__dot { transform: translateY(-50%) scale(1.15); }
+
+  .vision__head { margin-bottom: 1.4rem; }
+  .vision__lines li { font-size: 1rem; }
+
+  .ending { top: 40%; }
+  .contact { padding: 18px 20px 16px; }
+  .contact__row { font-size: 0.85rem; gap: 10px 18px; }
+  .btn { margin-left: 0; }
+
+  /* Panel: 풀스크린 바텀시트, 카드 세로 스택 */
+  .panel { padding: 0; align-items: end; }
+  .panel__sheet {
+    width: 100%;
+    max-height: 100dvh;
+    height: 100dvh;
+    border-radius: 0;
+    border: 0;
+  }
+  .panel__head { padding: 22px 20px 10px; }
+  .slider__viewport { overflow-y: auto; padding: 6px 20px 20px; cursor: default; touch-action: auto; flex: 1; min-height: 0; }
+  .slider__track { flex-direction: column; gap: 12px; transform: none !important; transition: none; }
+  .xcard { flex: none; padding: 0; }
+  .xcard__inner { min-height: 0; }
+  .xcard__rows { grid-template-columns: 1fr; gap: 2px 0; }
+  .xcard__key { padding-top: 6px; }
+  .slider__controls { display: none; }
+}
+
+/* ---------- 13. Reduced motion ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .reveal { transform: none; transition: opacity 0.6s ease-out; }
+  .scroll-hint svg { animation: none; }
+  .island, .btn, .slider__track { transition: none; }
+  .panel__sheet, .panel__backdrop { animation: none !important; }
+  .hero { transform: translate(-50%, -50%); }
+  .layer--far, .islands, .card--edu, .building { transform: none; }
+  .card--edu { transform: translateY(-50%); }
+}
+@media (prefers-reduced-motion: reduce) and (max-width: 720px) {
+  .card--edu { transform: none; }
+}

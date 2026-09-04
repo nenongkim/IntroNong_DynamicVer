@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 100" width="200" height="100" aria-hidden="true">
+  <!-- placeholder dolphin (side view) — replace with final asset, keep same filename -->
+  <path fill="#0C447C" d="M8 56 C20 40 45 30 80 32 C95 33 105 22 112 18 C118 26 116 34 110 38 C130 40 150 44 168 50 C172 44 178 36 190 34 C186 44 184 50 180 56 C186 60 190 68 192 74 C180 70 172 64 166 60 C150 66 120 72 96 70 C84 76 78 88 66 86 C70 80 74 74 78 70 C50 70 25 66 8 56 Z"/>
+  <circle cx="32" cy="50" r="2.6" fill="#E6F1FB"/>
+</svg>

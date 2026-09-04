@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" aria-hidden="true">
+  <!-- placeholder dolphin (back view, swimming away) — replace with final asset -->
+  <path fill="#0C447C" d="M60 8 C66 14 68 22 66 30 C74 34 80 44 80 56 C80 74 70 86 60 92 C50 86 40 74 40 56 C40 44 46 34 54 30 C52 22 54 14 60 8 Z"/>
+  <path fill="#0C447C" d="M14 96 C28 88 44 90 60 98 C76 90 92 88 106 96 C92 100 76 104 60 108 C44 104 28 100 14 96 Z"/>
+</svg>
