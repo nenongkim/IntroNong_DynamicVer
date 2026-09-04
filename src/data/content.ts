@@ -32,6 +32,21 @@ export const hero = {
   scrollHint: 'scroll to dive in',
 } as const;
 
+/* 히어로 배경 장면 (사용자 제작 이미지, public/assets/scenes) */
+export interface Scene {
+  id: string;
+  name: string;
+  name_ko: string;
+  src: string;
+  srcSm: string;
+}
+export const scenes: Scene[] = [
+  { id: 'shallows', name: 'Shallows', name_ko: '얕은 바다', src: 'assets/scenes/scene-1.jpg', srcSm: 'assets/scenes/scene-1-sm.jpg' },
+  { id: 'lagoon', name: 'Lagoon', name_ko: '라군', src: 'assets/scenes/scene-2.jpg', srcSm: 'assets/scenes/scene-2-sm.jpg' },
+  { id: 'deep', name: 'Deep Blue', name_ko: '깊은 바다', src: 'assets/scenes/scene-3.jpg', srcSm: 'assets/scenes/scene-3-sm.jpg' },
+  { id: 'reef', name: 'Coral Reef', name_ko: '산호초', src: 'assets/scenes/scene-4.jpg', srcSm: 'assets/scenes/scene-4-sm.jpg' },
+];
+
 export const researchInterests = [
   'Data-driven service planning & business analytics',
   'Database design & modeling',

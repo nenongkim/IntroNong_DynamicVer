@@ -2,18 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ArrowDown, ArrowUpRight } from 'lucide-react';
 import Bubbles from './components/Bubbles';
+import LivingWater from './components/LivingWater';
 import { ContactSection, ExperienceSection, ProfileSection, VisionSection } from './components/Sections';
-import { hero, navLinks, profile } from './data/content';
+import { hero, navLinks, profile, scenes } from './data/content';
 
 /* ---------- constants ---------- */
-// Pexels (무료, CORS 허용) · 돌고래 두 마리가 수면을 향해 올라가는 장면. 1080p 30fps, 17s
-const VIDEO_SRC = 'https://videos.pexels.com/video-files/5277928/5277928-hd_1920_1080_30fps.mp4';
-const VIDEO_SRC_SMALL = 'https://videos.pexels.com/video-files/5277928/5277928-hd_1280_720_30fps.mp4'; // 4MB, 모바일/저사양
-const VIDEO_START = 9;   // 이 시점부터 캡처 (돌고래가 가까이 오는 구간)
-const MAX_WIDTH = 720;   // 캡처 프레임 가로 상한 (메모리)
-const MAX_FRAMES = 180;  // 30fps × 6s. 넘으면 캡처를 멈추고 부메랑 시작
-const SOURCE_FPS = 30;   // 원본 영상 프레임레이트
-const PLAYBACK_SPEED = 0.45; // 1 = 원속도. 돌고래가 천천히 헤엄치도록 감속
+const SCENE_KEY = 'intronong.scene';
 
 const REDUCED =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -54,150 +48,22 @@ function tokenize(src: string): Token[] {
 }
 
 export default function App() {
-  const [framesReady, setFramesReady] = useState(false);
   const [scrolled, setScrolled] = useState(false); // 히어로를 지나면 네비 반전
+  const [scene, setScene] = useState(() => {
+    try { const v = Number(sessionStorage.getItem(SCENE_KEY)); return Number.isInteger(v) && v >= 0 && v < scenes.length ? v : 0; }
+    catch { return 0; }
+  });
+  const selectScene = (i: number) => {
+    setScene(i);
+    try { sessionStorage.setItem(SCENE_KEY, String(i)); } catch { /* ignore */ }
+  };
 
-  const videoRef = useRef<HTMLVideoElement>(null);
   const videoBgRef = useRef<HTMLDivElement>(null);
-  const displayCanvasRef = useRef<HTMLCanvasElement>(null);
-  const framesRef = useRef<HTMLCanvasElement[]>([]);
   const heroRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const hintRef = useRef<HTMLAnchorElement>(null);
 
   const tokens = useMemo(() => tokenize(hero.headline), []);
-
-  /* ---------- Effect 1 — Frame capture (boomerang setup) ---------- */
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video) return;
-
-    // 시작 지점 이동 (네이티브 루프 모드에서도 적용)
-    const seek = () => {
-      if (video.currentTime < VIDEO_START - 0.2) video.currentTime = VIDEO_START;
-    };
-
-    if (LOW_POWER || REDUCED) {
-      const onLoop = () => { if (video.currentTime < VIDEO_START - 0.2) video.currentTime = VIDEO_START; };
-      video.playbackRate = PLAYBACK_SPEED;
-      video.addEventListener('loadedmetadata', seek);
-      video.addEventListener('timeupdate', onLoop);
-      if (video.readyState >= 1) seek();
-      return () => {
-        video.removeEventListener('loadedmetadata', seek);
-        video.removeEventListener('timeupdate', onLoop);
-      };
-    }
-
-    let capturing = true;
-    let lastTime = -1;
-    let rafId = 0;
-    let vfcId = 0;
-    const frames: HTMLCanvasElement[] = [];
-
-    type VFCVideo = HTMLVideoElement & {
-      requestVideoFrameCallback: (cb: () => void) => number;
-      cancelVideoFrameCallback: (id: number) => void;
-    };
-    const hasVFC = 'requestVideoFrameCallback' in HTMLVideoElement.prototype;
-
-    const finish = () => {
-      if (!capturing) return;
-      capturing = false;
-      video.pause();
-      framesRef.current = frames;
-      setFramesReady(true);
-    };
-
-    const captureFrame = () => {
-      if (!capturing) return;
-      if (video.readyState < 2 || video.currentTime === lastTime) return;
-      if (video.currentTime < VIDEO_START - 0.05) return;
-      lastTime = video.currentTime;
-      const scale = Math.min(1, MAX_WIDTH / video.videoWidth);
-      const w = Math.round(video.videoWidth * scale);
-      const h = Math.round(video.videoHeight * scale);
-      if (!w || !h) return;
-      const c = document.createElement('canvas');
-      c.width = w;
-      c.height = h;
-      const ctx = c.getContext('2d');
-      if (!ctx) return;
-      ctx.drawImage(video, 0, 0, w, h);
-      frames.push(c);
-      if (frames.length >= MAX_FRAMES) finish();
-    };
-
-    const loop = () => {
-      if (!capturing) return;
-      captureFrame();
-      if (!capturing) return;
-      if (hasVFC) vfcId = (video as VFCVideo).requestVideoFrameCallback(loop);
-      else rafId = requestAnimationFrame(loop);
-    };
-
-    const onLoaded = () => {
-      seek();
-      video.playbackRate = PLAYBACK_SPEED; // 캡처 중 보이는 원본도 같은 속도
-      video.play().catch(() => {});
-      loop();
-    };
-    const onEnded = () => finish();
-
-    video.addEventListener('loadedmetadata', onLoaded);
-    video.addEventListener('ended', onEnded);
-    if (video.readyState >= 1) onLoaded();
-
-    return () => {
-      capturing = false;
-      cancelAnimationFrame(rafId);
-      if (hasVFC && vfcId) (video as VFCVideo).cancelVideoFrameCallback(vfcId);
-      video.removeEventListener('loadedmetadata', onLoaded);
-      video.removeEventListener('ended', onEnded);
-    };
-  }, []);
-
-  /* ---------- Effect 2 — Boomerang render ---------- */
-  useEffect(() => {
-    if (!framesReady) return;
-    const canvas = displayCanvasRef.current;
-    const frames = framesRef.current;
-    if (!canvas || frames.length === 0) return;
-
-    canvas.width = frames[0].width;
-    canvas.height = frames[0].height;
-    const ctx = canvas.getContext('2d');
-    if (!ctx) return;
-
-    // 시간 기반 실수 인덱스: 감속해도 프레임이 균일하게 진행된다
-    let index = 0;
-    let direction = 1;
-    let last = performance.now();
-    let drawn = -1;
-    let rafId = 0;
-    const maxIndex = frames.length - 1;
-
-    const render = (now: number) => {
-      const dt = Math.min(0.1, (now - last) / 1000);
-      last = now;
-      index += direction * dt * SOURCE_FPS * PLAYBACK_SPEED;
-      if (index >= maxIndex) {
-        index = maxIndex;
-        direction = -1;
-      } else if (index <= 0) {
-        index = 0;
-        direction = 1;
-      }
-      const i = Math.round(index);
-      if (i !== drawn) {
-        drawn = i;
-        ctx.drawImage(frames[i], 0, 0);
-      }
-      rafId = requestAnimationFrame(render);
-    };
-    rafId = requestAnimationFrame(render);
-    return () => cancelAnimationFrame(rafId);
-  }, [framesReady]);
 
   /* ---------- Effect 3 — 등장 시퀀스 (gsap) ---------- */
   useEffect(() => {
@@ -208,19 +74,17 @@ export default function App() {
 
     if (REDUCED) {
       // 애니메이션 없이 즉시 표시 (컨테이너의 opacity-0 클래스를 인라인으로 덮어쓴다)
-      gsap.set([hero, navRef.current, hintRef.current, rest], { autoAlpha: 1, y: 0 });
+      gsap.set([hero, navRef.current, hintRef.current, '[data-scenes]', rest], { autoAlpha: 1, y: 0 });
       gsap.set(words, { yPercent: 0, rotate: 0 });
       return;
     }
 
     const tl = gsap.timeline({ defaults: { ease: 'expo.out' } });
     tl.set(hero, { autoAlpha: 1 })
-      // 배경 느린 줌 (Ken Burns)
-      .fromTo(videoBgRef.current, { scale: 1.16 }, { scale: 1.06, duration: 14, ease: 'power1.out' }, 0)
       .fromTo(navRef.current, { y: -12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.2 }, 0.2)
       .fromTo(words, { yPercent: 110, rotate: 2 }, { yPercent: 0, rotate: 0, duration: 1.3, stagger: 0.055 }, 0.35)
       .fromTo(rest, { y: 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.1, stagger: 0.14 }, 0.9)
-      .fromTo(hintRef.current, { autoAlpha: 0 }, { autoAlpha: 1, duration: 1 }, 1.8);
+      .fromTo([hintRef.current, '[data-scenes]'], { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 1, stagger: 0.15 }, 1.8);
 
     return () => { tl.kill(); };
   }, []);
@@ -233,22 +97,20 @@ export default function App() {
     return () => window.removeEventListener('scroll', onScroll);
   }, []);
 
-  /* ---------- Effect 4 — 마우스 패럴랙스 (배경 · 텍스트 반대 방향) ---------- */
+  /* ---------- Effect 4 — 텍스트 패럴랙스 (마우스 반대 방향 + 스크롤 시 가라앉음) ---------- */
   useEffect(() => {
     if (REDUCED) return;
-    const BG = 18;
     const TEXT = -7;
-    let tx = 0, ty = 0, bx = 0, by = 0, raf = 0;
-
+    let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
     const onMove = (e: MouseEvent) => {
       tx = (e.clientX / window.innerWidth - 0.5) * 2;
       ty = (e.clientY / window.innerHeight - 0.5) * 2;
     };
     const tick = () => {
-      bx += (tx * BG - bx) * 0.05;
-      by += (ty * BG - by) * 0.05;
-      if (videoBgRef.current) gsap.set(videoBgRef.current, { x: bx, y: by });
-      if (heroRef.current) gsap.set(heroRef.current, { x: bx * (TEXT / BG), y: by * (TEXT / BG) });
+      cx += (tx * TEXT - cx) * 0.05;
+      cy += (ty * TEXT - cy) * 0.05;
+      const sink = Math.min(window.scrollY, window.innerHeight) * 0.22;
+      if (heroRef.current) gsap.set(heroRef.current, { x: cx, y: cy + sink, opacity: 1 - Math.min(1, window.scrollY / (window.innerHeight * 0.7)) });
       raf = requestAnimationFrame(tick);
     };
     window.addEventListener('mousemove', onMove);
@@ -261,25 +123,9 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-ocean-800 text-ocean-800 font-body overflow-x-hidden">
-      {/* 1. 원경 — 바닷속 영상 (부메랑) */}
-      <div ref={videoBgRef} className="fixed top-0 left-0 w-full h-full z-0 origin-center will-change-transform">
-        <video
-          ref={videoRef}
-          src={LOW_POWER ? VIDEO_SRC_SMALL : VIDEO_SRC}
-          muted
-          playsInline
-          autoPlay
-          loop={LOW_POWER || REDUCED}
-          preload="auto"
-          crossOrigin="anonymous"
-          className="w-full h-full object-cover"
-          style={{ display: framesReady ? 'none' : 'block' }}
-        />
-        <canvas
-          ref={displayCanvasRef}
-          className="w-full h-full object-cover"
-          style={{ display: framesReady ? 'block' : 'none' }}
-        />
+      {/* 1. 원경 — 살아 움직이는 바닷속 (WebGL, 사용자 제작 이미지 4장) */}
+      <div ref={videoBgRef} className="fixed top-0 left-0 w-full h-full z-0">
+        <LivingWater scenes={scenes.map((s) => (LOW_POWER ? s.srcSm : s.src))} active={scene} reduced={REDUCED} />
       </div>
       {/* 수면 안개 + 그레인 */}
       <div className="surface-mist fixed inset-0 z-[1] pointer-events-none" />
@@ -332,6 +178,7 @@ export default function App() {
         className="absolute left-0 right-0 px-6 md:px-10 opacity-0"
         style={{ top: 'clamp(112px, 17vh, 176px)' }}
       >
+        <div className="hero-glow pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[150%] w-[min(120vw,1400px)] -translate-x-1/2 -translate-y-1/2" aria-hidden="true" />
         <div className="mx-auto max-w-[1180px] text-center">
           <p
             data-reveal
@@ -357,7 +204,7 @@ export default function App() {
 
           <p
             data-reveal
-            className="mt-5 md:mt-6 mx-auto max-w-[560px] text-[15px] md:text-base leading-relaxed text-ocean-800/75 break-keep"
+            className="mt-5 md:mt-6 mx-auto max-w-[560px] text-[15px] md:text-base leading-relaxed text-ocean-800/90 break-keep"
           >
             {hero.tagline}
           </p>
@@ -382,11 +229,43 @@ export default function App() {
         </div>
       </div>
 
+      {/* 장면 선택 — 버튼을 누르면 다른 바다로 전환 */}
+      <div
+        data-scenes
+        className="absolute bottom-6 left-6 md:left-10 z-20 flex flex-col gap-2.5 opacity-0"
+        role="group"
+        aria-label="Background scene"
+      >
+        <p className="font-heading text-[10px] tracking-[0.18em] uppercase text-ocean-50/60">Choose a sea</p>
+        <div className="flex flex-wrap gap-1.5">
+          {scenes.map((s, i) => {
+            const on = i === scene;
+            return (
+              <button
+                key={s.id}
+                type="button"
+                onClick={() => selectScene(i)}
+                aria-pressed={on}
+                className={`group inline-flex items-center gap-2 rounded border px-3.5 py-1.5 font-heading text-[12px] font-medium backdrop-blur-md transition-all duration-300 ${
+                  on
+                    ? 'border-lime/70 bg-lime/90 text-ocean-800'
+                    : 'border-white/20 bg-white/10 text-ocean-50/85 hover:bg-white/20 hover:border-white/35'
+                }`}
+              >
+                <span className={`h-1.5 w-1.5 rounded-full transition-colors ${on ? 'bg-ocean-800' : 'bg-white/60 group-hover:bg-white'}`} />
+                {s.name}
+                <span className="font-body text-[11px] font-normal opacity-70">{s.name_ko}</span>
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
       {/* Scroll hint */}
       <a
         ref={hintRef}
         href="#profile"
-        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 font-heading text-[11px] tracking-[0.16em] uppercase text-ocean-50/70 hover:text-ocean-50 opacity-0"
+        className="absolute bottom-7 right-6 md:right-10 flex items-center gap-2 font-heading text-[11px] tracking-[0.16em] uppercase text-ocean-50/70 hover:text-ocean-50 opacity-0"
       >
         {hero.scrollHint}
         <ArrowDown size={12} className="hint-bounce" />
