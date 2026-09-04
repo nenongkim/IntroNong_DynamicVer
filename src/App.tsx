@@ -11,6 +11,8 @@ const VIDEO_SRC_SMALL = 'https://videos.pexels.com/video-files/5277928/5277928-h
 const VIDEO_START = 9;   // 이 시점부터 캡처 (돌고래가 가까이 오는 구간)
 const MAX_WIDTH = 720;   // 캡처 프레임 가로 상한 (메모리)
 const MAX_FRAMES = 180;  // 30fps × 6s. 넘으면 캡처를 멈추고 부메랑 시작
+const SOURCE_FPS = 30;   // 원본 영상 프레임레이트
+const PLAYBACK_SPEED = 0.45; // 1 = 원속도. 돌고래가 천천히 헤엄치도록 감속
 
 const REDUCED =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
@@ -75,6 +77,7 @@ export default function App() {
 
     if (LOW_POWER || REDUCED) {
       const onLoop = () => { if (video.currentTime < VIDEO_START - 0.2) video.currentTime = VIDEO_START; };
+      video.playbackRate = PLAYBACK_SPEED;
       video.addEventListener('loadedmetadata', seek);
       video.addEventListener('timeupdate', onLoop);
       if (video.readyState >= 1) seek();
@@ -133,6 +136,7 @@ export default function App() {
 
     const onLoaded = () => {
       seek();
+      video.playbackRate = PLAYBACK_SPEED; // 캡처 중 보이는 원본도 같은 속도
       video.play().catch(() => {});
       loop();
     };
@@ -163,24 +167,29 @@ export default function App() {
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
+    // 시간 기반 실수 인덱스: 감속해도 프레임이 균일하게 진행된다
     let index = 0;
     let direction = 1;
     let last = performance.now();
-    const interval = 1000 / 30;
+    let drawn = -1;
     let rafId = 0;
+    const maxIndex = frames.length - 1;
 
     const render = (now: number) => {
-      if (now - last >= interval) {
-        last = now;
-        ctx.drawImage(frames[index], 0, 0);
-        index += direction;
-        if (index >= frames.length - 1) {
-          index = frames.length - 1;
-          direction = -1;
-        } else if (index <= 0) {
-          index = 0;
-          direction = 1;
-        }
+      const dt = Math.min(0.1, (now - last) / 1000);
+      last = now;
+      index += direction * dt * SOURCE_FPS * PLAYBACK_SPEED;
+      if (index >= maxIndex) {
+        index = maxIndex;
+        direction = -1;
+      } else if (index <= 0) {
+        index = 0;
+        direction = 1;
+      }
+      const i = Math.round(index);
+      if (i !== drawn) {
+        drawn = i;
+        ctx.drawImage(frames[i], 0, 0);
       }
       rafId = requestAnimationFrame(render);
     };
