@@ -2,6 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import gsap from 'gsap';
 import { ArrowDown, ArrowUpRight } from 'lucide-react';
 import Bubbles from './components/Bubbles';
+import { ContactSection, ExperienceSection, ProfileSection, VisionSection } from './components/Sections';
 import { hero, navLinks, profile } from './data/content';
 
 /* ---------- constants ---------- */
@@ -54,6 +55,7 @@ function tokenize(src: string): Token[] {
 
 export default function App() {
   const [framesReady, setFramesReady] = useState(false);
+  const [scrolled, setScrolled] = useState(false); // 히어로를 지나면 네비 반전
 
   const videoRef = useRef<HTMLVideoElement>(null);
   const videoBgRef = useRef<HTMLDivElement>(null);
@@ -61,7 +63,7 @@ export default function App() {
   const framesRef = useRef<HTMLCanvasElement[]>([]);
   const heroRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
-  const hintRef = useRef<HTMLDivElement>(null);
+  const hintRef = useRef<HTMLAnchorElement>(null);
 
   const tokens = useMemo(() => tokenize(hero.headline), []);
 
@@ -223,6 +225,14 @@ export default function App() {
     return () => { tl.kill(); };
   }, []);
 
+  /* ---------- Effect 3.5 — 스크롤 위치에 따른 네비 테마 ---------- */
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.72);
+    onScroll();
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
+
   /* ---------- Effect 4 — 마우스 패럴랙스 (배경 · 텍스트 반대 방향) ---------- */
   useEffect(() => {
     if (REDUCED) return;
@@ -281,9 +291,13 @@ export default function App() {
       {/* 2. Nav — 상단이 밝으므로 글래스 없이 딥블루 텍스트 */}
       <nav
         ref={navRef}
-        className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 py-6 opacity-0"
+        className={`fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-6 md:px-10 opacity-0 transition-[padding,background-color,color,backdrop-filter] duration-500 ${
+          scrolled
+            ? 'py-4 text-ocean-50 bg-ocean-800/70 backdrop-blur-md border-b border-white/10'
+            : 'py-6 text-ocean-800'
+        }`}
       >
-        <a href="#top" className="flex items-center gap-2.5 text-ocean-800" aria-label="Yewon Kim">
+        <a href="#top" className="flex items-center gap-2.5" aria-label="Yewon Kim">
           <DolphinMark className="w-9 h-[18px]" />
           <span className="font-heading text-[15px] font-semibold tracking-tight">Yewon Kim</span>
         </a>
@@ -292,7 +306,7 @@ export default function App() {
             <a
               key={label}
               href={`#${label.toLowerCase()}`}
-              className="font-heading text-[13px] font-medium text-ocean-800/60 hover:text-ocean-800 transition-colors duration-200"
+              className="font-heading text-[13px] font-medium opacity-60 hover:opacity-100 transition-opacity duration-200"
             >
               {label}
             </a>
@@ -301,16 +315,21 @@ export default function App() {
         <a
           href={profile.cv_pdf}
           download
-          className="bg-ocean-800 text-ocean-50 font-heading text-[13px] font-medium rounded px-4 py-2 transition-all duration-200 hover:scale-[1.03] hover:shadow-[0_8px_24px_-8px_rgba(12,68,124,0.6)] active:scale-[0.97]"
+          className={`font-heading text-[13px] font-medium rounded px-4 py-2 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] ${
+            scrolled
+              ? 'bg-lime text-ocean-800 hover:shadow-[0_8px_24px_-8px_rgba(232,249,122,0.6)]'
+              : 'bg-ocean-800 text-ocean-50 hover:shadow-[0_8px_24px_-8px_rgba(12,68,124,0.6)]'
+          }`}
         >
           Download CV
         </a>
       </nav>
 
-      {/* 3. Hero copy — 상단 여백에 에디토리얼 배치 */}
+      {/* 3. Hero — 한 화면 높이의 일반 섹션 (스크롤하면 위로 밀려나고 아래 섹션이 영상 위로 올라온다) */}
+      <section id="top" className="relative z-20 h-[100svh] min-h-[640px]">
       <div
         ref={heroRef}
-        className="fixed left-0 right-0 z-20 px-6 md:px-10 opacity-0"
+        className="absolute left-0 right-0 px-6 md:px-10 opacity-0"
         style={{ top: 'clamp(112px, 17vh, 176px)' }}
       >
         <div className="mx-auto max-w-[1180px] text-center">
@@ -364,14 +383,24 @@ export default function App() {
       </div>
 
       {/* Scroll hint */}
-      <div
+      <a
         ref={hintRef}
-        className="fixed bottom-6 left-1/2 -translate-x-1/2 z-20 flex items-center gap-2 font-heading text-[11px] tracking-[0.16em] uppercase text-ocean-50/70 opacity-0"
-        aria-hidden="true"
+        href="#profile"
+        className="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 font-heading text-[11px] tracking-[0.16em] uppercase text-ocean-50/70 hover:text-ocean-50 opacity-0"
       >
         {hero.scrollHint}
         <ArrowDown size={12} className="hint-bounce" />
-      </div>
+      </a>
+      </section>
+
+      {/* 4. 본문 섹션 — 딥오션 배경, 고정된 영상 위로 올라온다 */}
+      <main className="relative z-30 bg-ocean-800 text-ocean-50">
+        <div className="pointer-events-none absolute inset-x-0 -top-40 h-40 bg-gradient-to-b from-transparent to-ocean-800" />
+        <ProfileSection />
+        <ExperienceSection />
+        <VisionSection />
+        <ContactSection />
+      </main>
     </div>
   );
 }

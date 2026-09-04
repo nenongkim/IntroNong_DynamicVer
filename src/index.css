@@ -5,6 +5,9 @@
 @tailwind components;
 @tailwind utilities;
 
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+
 body {
   font-family: 'Pretendard Variable', Pretendard, Inter, system-ui, sans-serif;
   background: #0C447C; /* 영상 로딩 전 딥오션 */
