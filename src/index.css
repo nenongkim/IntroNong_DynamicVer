@@ -1,4 +1,4 @@
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Inter:wght@400;500;600&display=swap');
 @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css');
 
 @tailwind base;
@@ -12,7 +12,7 @@ body {
   -webkit-font-smoothing: antialiased;
 }
 
-/* ---------- Liquid glass (레퍼런스 기법) ---------- */
+/* ---------- Liquid glass (다른 섹션용으로 유지) ---------- */
 .liquid-glass {
   background: rgba(255, 255, 255, 0.01);
   background-blend-mode: luminosity;
@@ -44,52 +44,48 @@ body {
   pointer-events: none;
 }
 
-.liquid-glass-strong {
-  background: rgba(255, 255, 255, 0.01);
-  background-blend-mode: luminosity;
-  backdrop-filter: blur(50px);
-  -webkit-backdrop-filter: blur(50px);
-  border: none;
-  box-shadow: 4px 4px 4px rgba(0, 0, 0, 0.05), inset 0 1px 1px rgba(255, 255, 255, 0.15);
-  position: relative;
-  overflow: hidden;
-}
-.liquid-glass-strong::before {
-  content: '';
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.4px;
+/* ---------- 수면 안개: 상단을 밝혀 텍스트를 딥블루로 올린다 ---------- */
+.surface-mist {
   background: linear-gradient(
     180deg,
-    rgba(255, 255, 255, 0.5) 0%,
-    rgba(255, 255, 255, 0.2) 20%,
-    rgba(255, 255, 255, 0) 40%,
-    rgba(255, 255, 255, 0) 60%,
-    rgba(255, 255, 255, 0.2) 80%,
-    rgba(255, 255, 255, 0.5) 100%
+    rgba(230, 241, 251, 0.94) 0%,
+    rgba(230, 241, 251, 0.86) 20%,
+    rgba(230, 241, 251, 0.55) 40%,
+    rgba(230, 241, 251, 0.2) 56%,
+    rgba(230, 241, 251, 0) 68%
   );
-  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
-  -webkit-mask-composite: xor;
-  mask-composite: exclude;
-  pointer-events: none;
 }
 
-/* ---------- Hero title (기획서 §2 타이포) ---------- */
-.hero-title {
-  font-family: 'Inter', 'Pretendard Variable', Pretendard, sans-serif;
-  font-weight: 600;
-  font-size: clamp(3.4rem, 9vw, 9.5rem);
-  line-height: 0.95;
-  letter-spacing: -0.035em;
-  color: #E6F1FB;
-  text-align: center;
-  text-shadow: 0 12px 40px rgba(0, 20, 50, 0.45);
+/* ---------- 필름 그레인 ---------- */
+.grain {
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='160' height='160'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/><feColorMatrix type='saturate' values='0'/></filter><rect width='100%' height='100%' filter='url(%23n)' opacity='0.5'/></svg>");
+  background-size: 160px 160px;
+  mix-blend-mode: soft-light;
+  opacity: 0.35;
 }
 
-/* ---------- Dolphin (근경 레이어) ---------- */
-.dolphin-layer {
-  filter: drop-shadow(0 28px 34px rgba(0, 12, 40, 0.55)) drop-shadow(0 4px 8px rgba(0, 12, 40, 0.3));
+/* ---------- Headline (에디토리얼 세리프) ---------- */
+.hero-headline {
+  font-family: 'Instrument Serif', Georgia, serif;
+  font-weight: 400;
+  font-size: clamp(2.5rem, 5.6vw, 5.6rem);
+  line-height: 1.02;
+  letter-spacing: -0.015em;
+  color: #0C447C;
+}
+.hero-headline em {
+  font-style: italic;
+  color: #378ADD;
+}
+.hl-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: bottom;
+  padding-bottom: 0.08em; /* 디센더가 마스크에 잘리지 않게 */
+  margin-bottom: -0.08em;
+}
+.hl-word {
+  display: inline-block;
   will-change: transform;
 }
 

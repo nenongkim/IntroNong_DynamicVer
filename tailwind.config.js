@@ -5,6 +5,7 @@ export default {
     extend: {
       fontFamily: {
         heading: ['Inter', 'Pretendard Variable', 'Pretendard', 'sans-serif'],
+        serif: ['Instrument Serif', 'Georgia', 'serif'],
         body: ['Pretendard Variable', 'Pretendard', 'Inter', 'system-ui', 'sans-serif'],
       },
       /* 확정 팔레트 (기획서 §2) */

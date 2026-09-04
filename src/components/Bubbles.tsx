@@ -15,7 +15,14 @@ interface Bubble {
   a: number;
 }
 
-export default function Bubbles({ reduced = false }: { reduced?: boolean }) {
+export default function Bubbles({
+  reduced = false,
+  intensity = 1,
+}: {
+  reduced?: boolean;
+  /** 0~1 · 기포 개수·밝기 배율 */
+  intensity?: number;
+}) {
   const ref = useRef<HTMLCanvasElement>(null);
 
   useEffect(() => {
@@ -42,7 +49,7 @@ export default function Bubbles({ reduced = false }: { reduced?: boolean }) {
         vy: 16 + Math.random() * 28 + r * 4,
         ph: Math.random() * Math.PI * 2,
         amp: 6 + Math.random() * 10,
-        a: 0.18 + Math.random() * 0.4,
+        a: (0.18 + Math.random() * 0.4) * intensity,
       };
     };
 
@@ -53,7 +60,7 @@ export default function Bubbles({ reduced = false }: { reduced?: boolean }) {
       canvas.width = Math.round(W * dpr);
       canvas.height = Math.round(H * dpr);
       ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
-      const n = Math.max(18, Math.min(70, Math.round((W * H) / 32000)));
+      const n = Math.round(Math.max(18, Math.min(70, Math.round((W * H) / 32000))) * intensity);
       bubbles = Array.from({ length: n }, () => spawn(true));
     };
 
@@ -109,7 +116,7 @@ export default function Bubbles({ reduced = false }: { reduced?: boolean }) {
       window.removeEventListener('mousemove', onMove);
       document.removeEventListener('visibilitychange', onVisibility);
     };
-  }, [reduced]);
+  }, [reduced, intensity]);
 
   return (
     <canvas

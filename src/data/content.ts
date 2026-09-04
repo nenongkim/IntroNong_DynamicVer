@@ -21,10 +21,12 @@ export const profile = {
 
 export const navLinks = ['Profile', 'Experience', 'Vision', 'Contact'] as const;
 
+/* 히어로. headline 의 *별표* 로 감싼 단어는 이탤릭 + 포인트 컬러로 강조 */
 export const hero = {
-  title: 'Yewon Kim',
-  left: '데이터로 서비스를 설계하고, 사람의 목소리를 듣는 사람',
-  right: 'Data-driven service planning · Database modeling · Deep learning · Mixed reality',
+  eyebrow: 'Yewon Kim · Management Information Systems, Hannam University',
+  eyebrowShort: 'Yewon Kim · MIS, Hannam University',
+  headline: 'Designing services with *data*, listening to *people*.',
+  tagline: '데이터로 서비스를 설계하고, 사람의 목소리를 듣는 사람',
   primaryCta: 'Explore my journey',
   secondaryCta: 'Download CV',
   scrollHint: 'scroll to dive in',
