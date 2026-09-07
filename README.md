@@ -63,5 +63,5 @@ legacy/                 v0.1 바닐라 버전 (돌고래 스크롤 씬 5개). �
 
 - [ ] 배경 영상을 바다/돌고래 톤으로 교체 (`VIDEO_SRC` 한 줄)
 - [ ] Profile / Experience / Vision / Contact 섹션을 새 스택으로 이식 (`legacy/` 참고)
-- [ ] `public/assets/cv.pdf` 추가 (현재 CV 버튼은 404)
+- [x] `public/assets/cv.pdf` 추가 — 다운로드 파일명 `Yewon_Kim_CV.pdf`. CV 를 갱신하려면 이 파일만 덮어쓰면 된다
 - [ ] 호스팅 결정 (GitHub Pages: public 필요 / Cloudflare Pages·Netlify: private 가능)
