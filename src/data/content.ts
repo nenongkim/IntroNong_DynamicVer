@@ -50,8 +50,8 @@ export const scenes: Scene[] = [
 /* 섹션(id) → 배경 장면 index. 히어로(top)는 Profile 과 같은 장면 */
 export const sectionScenes: Record<string, number> = {
   top: 0,        // Shallows
-  profile: 0,    // Shallows
-  experience: 1, // Lagoon
+  profile: 1,    // Lagoon
+  experience: 0, // Shallows
   vision: 3,     // Coral Reef
   contact: 2,    // Deep Blue
 };
