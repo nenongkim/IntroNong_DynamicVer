@@ -216,8 +216,7 @@ export default function App() {
       >
         <div
           ref={heroRef}
-          className="absolute left-0 right-0 px-6 md:px-10 opacity-0"
-          style={{ top: 'clamp(112px, 17vh, 176px)' }}
+          className="absolute left-0 right-0 top-1/2 -translate-y-[52%] px-6 md:px-10 opacity-0"
         >
           <div className="hero-glow pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[150%] w-[min(120vw,1400px)] -translate-x-1/2 -translate-y-1/2" aria-hidden="true" />
           <div className="mx-auto max-w-[1180px] text-center">
