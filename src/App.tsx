@@ -16,12 +16,13 @@ const LOW_POWER =
     ((navigator as Navigator & { deviceMemory?: number }).deviceMemory ?? 8) < 4);
 
 /* 화면(슬라이드) 정의 — 순서가 곧 좌우 이동 순서 */
+/* dim: 배경 어둡기 0(수면, 원본) ~ 1(딥오션). 뒤로 갈수록 깊이 잠기는 그라데이션 */
 const SLIDES = [
-  { id: 'top', label: 'Home', label_ko: '홈' },
-  { id: 'profile', label: 'Profile', label_ko: '프로필' },
-  { id: 'experience', label: 'Experience', label_ko: '경험' },
-  { id: 'vision', label: 'Vision', label_ko: '비전' },
-  { id: 'contact', label: 'Contact', label_ko: '연락' },
+  { id: 'top', label: 'Home', label_ko: '홈', dim: 0 },
+  { id: 'profile', label: 'Profile', label_ko: '프로필', dim: 0.5 },
+  { id: 'experience', label: 'Experience', label_ko: '경험', dim: 0.75 },
+  { id: 'vision', label: 'Vision', label_ko: '비전', dim: 1 },
+  { id: 'contact', label: 'Contact', label_ko: '연락', dim: 1 },
 ] as const;
 type SlideId = (typeof SLIDES)[number]['id'];
 const SLIDE_MS = 850;
@@ -175,7 +176,7 @@ export default function App() {
     <div className="relative h-[100svh] min-h-[600px] overflow-hidden bg-ocean-800 text-ocean-800 font-body">
       {/* 1. 배경 — 화면마다 다른 바다 (WebGL) */}
       <div className="fixed top-0 left-0 w-full h-full z-0">
-        <LivingWater scenes={scenes.map((s) => (LOW_POWER ? s.srcSm : s.src))} active={scene} dim={onHero ? 0 : 1} reduced={REDUCED} />
+        <LivingWater scenes={scenes.map((s) => (LOW_POWER ? s.srcSm : s.src))} active={scene} dim={current.dim} reduced={REDUCED} />
       </div>
       <div className={`surface-mist fixed inset-0 z-[1] pointer-events-none transition-opacity duration-1000 ${onHero ? 'opacity-100' : 'opacity-0'}`} />
       <div className="grain fixed inset-0 z-[2] pointer-events-none" aria-hidden="true" />
