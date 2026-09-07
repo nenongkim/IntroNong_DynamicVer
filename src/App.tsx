@@ -225,7 +225,7 @@ export default function App() {
       </section>
 
       {/* 4. 본문 섹션 — 배경은 고정된 LivingWater 가 섹션마다 다른 장면으로 전환 (셰이더에서 어둡게) */}
-      <main className="relative z-30 text-ocean-50 bg-ocean-800/30">
+      <main className="relative z-30 text-ocean-50 bg-ocean-800/15">
         <ProfileSection />
         <ExperienceSection />
         <VisionSection />

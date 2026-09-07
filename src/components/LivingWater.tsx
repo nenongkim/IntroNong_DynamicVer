@@ -86,7 +86,7 @@ void main(){
   float ca = noise(uv * vec2(6.0, 3.0) + vec2(t * 0.12, -t * 0.05));
   float cb = noise(uv * vec2(9.0, 5.0) - vec2(t * 0.10, t * 0.07));
   float caus = pow(ca * cb, 1.6);
-  float light = 1.0 - 0.55 * uDim;   // 섹션에선 빛 효과를 줄여 글자를 보호
+  float light = 1.0 - 0.4 * uDim;    // 섹션에선 빛 효과를 조금 줄여 글자를 보호
   col += vec3(0.85, 0.96, 1.0) * caus * 0.34 * smoothstep(0.25, 1.0, uv.y) * uWarp * light;
 
   // 빛줄기
@@ -97,7 +97,7 @@ void main(){
 
   // 섹션용 딥오션 톤: 어둡게 + 채도 낮게 + sky-800 틴트 (움직임은 그대로 보인다)
   float lum = dot(col, vec3(0.299, 0.587, 0.114));
-  vec3 dimmed = mix(col, vec3(lum), 0.55) * 0.24 + vec3(0.047, 0.267, 0.486) * 0.22;
+  vec3 dimmed = mix(col, vec3(lum), 0.42) * 0.40 + vec3(0.047, 0.267, 0.486) * 0.18;
   col = mix(col, dimmed, uDim);
 
   // 비네트
