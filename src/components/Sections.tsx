@@ -195,7 +195,7 @@ export function ContactSection() {
           </a>
           <a
             href={profile.cv_pdf}
-            download
+            download="Yewon_Kim_CV.pdf"
             className="inline-flex items-center gap-1.5 rounded border border-white/15 bg-white/[0.06] px-6 py-3 font-heading text-sm font-medium text-ocean-50 transition-all duration-200 hover:bg-white/10"
           >
             Download CV

@@ -197,7 +197,7 @@ export default function App() {
         </div>
         <a
           href={profile.cv_pdf}
-          download
+          download="Yewon_Kim_CV.pdf"
           className={`font-heading text-[13px] font-medium rounded px-4 py-2 transition-all duration-300 hover:scale-[1.03] active:scale-[0.97] ${
             onHero ? 'bg-ocean-800 text-ocean-50' : 'bg-lime text-ocean-800'
           }`}
@@ -252,7 +252,7 @@ export default function App() {
               </button>
               <a
                 href={profile.cv_pdf}
-                download
+                download="Yewon_Kim_CV.pdf"
                 className="group inline-flex items-center gap-1.5 font-heading text-sm font-medium text-ocean-800 bg-white/55 backdrop-blur-md rounded px-5 py-3 transition-all duration-200 hover:bg-white/75 hover:scale-[1.03] active:scale-[0.97]"
               >
                 {hero.secondaryCta}
