@@ -4,11 +4,9 @@ import { ArrowDown, ArrowUpRight } from 'lucide-react';
 import Bubbles from './components/Bubbles';
 import LivingWater from './components/LivingWater';
 import { ContactSection, ExperienceSection, ProfileSection, VisionSection } from './components/Sections';
-import { hero, navLinks, profile, scenes } from './data/content';
+import { hero, navLinks, profile, scenes, sectionScenes } from './data/content';
 
 /* ---------- constants ---------- */
-const SCENE_KEY = 'intronong.scene';
-
 const REDUCED =
   typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 // 저사양/모바일: 프레임 캡처 대신 네이티브 루프
@@ -49,16 +47,10 @@ function tokenize(src: string): Token[] {
 
 export default function App() {
   const [scrolled, setScrolled] = useState(false); // 히어로를 지나면 네비 반전
-  const [scene, setScene] = useState(() => {
-    try { const v = Number(sessionStorage.getItem(SCENE_KEY)); return Number.isInteger(v) && v >= 0 && v < scenes.length ? v : 0; }
-    catch { return 0; }
-  });
-  const selectScene = (i: number) => {
-    setScene(i);
-    try { sessionStorage.setItem(SCENE_KEY, String(i)); } catch { /* ignore */ }
-  };
+  const [scene, setScene] = useState(sectionScenes.top ?? 0); // 현재 섹션의 배경 장면
 
   const videoBgRef = useRef<HTMLDivElement>(null);
+  const mistRef = useRef<HTMLDivElement>(null);
   const heroRef = useRef<HTMLDivElement>(null);
   const navRef = useRef<HTMLElement>(null);
   const hintRef = useRef<HTMLAnchorElement>(null);
@@ -74,7 +66,7 @@ export default function App() {
 
     if (REDUCED) {
       // 애니메이션 없이 즉시 표시 (컨테이너의 opacity-0 클래스를 인라인으로 덮어쓴다)
-      gsap.set([hero, navRef.current, hintRef.current, '[data-scenes]', rest], { autoAlpha: 1, y: 0 });
+      gsap.set([hero, navRef.current, hintRef.current, rest], { autoAlpha: 1, y: 0 });
       gsap.set(words, { yPercent: 0, rotate: 0 });
       return;
     }
@@ -84,40 +76,32 @@ export default function App() {
       .fromTo(navRef.current, { y: -12, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.2 }, 0.2)
       .fromTo(words, { yPercent: 110, rotate: 2 }, { yPercent: 0, rotate: 0, duration: 1.3, stagger: 0.055 }, 0.35)
       .fromTo(rest, { y: 18, autoAlpha: 0 }, { y: 0, autoAlpha: 1, duration: 1.1, stagger: 0.14 }, 0.9)
-      .fromTo([hintRef.current, '[data-scenes]'], { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 1, stagger: 0.15 }, 1.8);
+      .fromTo(hintRef.current, { autoAlpha: 0, y: 8 }, { autoAlpha: 1, y: 0, duration: 1 }, 1.8);
 
     return () => { tl.kill(); };
   }, []);
 
-  /* ---------- Effect 3.5 — 스크롤 위치에 따른 네비 테마 ---------- */
+  /* ---------- Effect 3.5 — 스크롤: 네비 테마 · 현재 섹션 → 배경 장면 · 수면 안개 페이드 ---------- */
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > window.innerHeight * 0.72);
+    const ids = ['contact', 'vision', 'experience', 'profile'];
+    const onScroll = () => {
+      const vh = window.innerHeight;
+      setScrolled(window.scrollY > vh * 0.72);
+      // 화면 45% 지점을 지난 가장 아래 섹션이 현재 섹션
+      let current = 'top';
+      for (const id of ids) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= vh * 0.45) { current = id; break; }
+      }
+      setScene(sectionScenes[current] ?? 0);
+      if (mistRef.current) mistRef.current.style.opacity = String(1 - Math.min(1, window.scrollY / (vh * 0.85)));
+    };
     onScroll();
     window.addEventListener('scroll', onScroll, { passive: true });
-    return () => window.removeEventListener('scroll', onScroll);
-  }, []);
-
-  /* ---------- Effect 4 — 텍스트 패럴랙스 (마우스 반대 방향 + 스크롤 시 가라앉음) ---------- */
-  useEffect(() => {
-    if (REDUCED) return;
-    const TEXT = -7;
-    let tx = 0, ty = 0, cx = 0, cy = 0, raf = 0;
-    const onMove = (e: MouseEvent) => {
-      tx = (e.clientX / window.innerWidth - 0.5) * 2;
-      ty = (e.clientY / window.innerHeight - 0.5) * 2;
-    };
-    const tick = () => {
-      cx += (tx * TEXT - cx) * 0.05;
-      cy += (ty * TEXT - cy) * 0.05;
-      const sink = Math.min(window.scrollY, window.innerHeight) * 0.22;
-      if (heroRef.current) gsap.set(heroRef.current, { x: cx, y: cy + sink, opacity: 1 - Math.min(1, window.scrollY / (window.innerHeight * 0.7)) });
-      raf = requestAnimationFrame(tick);
-    };
-    window.addEventListener('mousemove', onMove);
-    raf = requestAnimationFrame(tick);
+    window.addEventListener('resize', onScroll);
     return () => {
-      window.removeEventListener('mousemove', onMove);
-      cancelAnimationFrame(raf);
+      window.removeEventListener('scroll', onScroll);
+      window.removeEventListener('resize', onScroll);
     };
   }, []);
 
@@ -128,7 +112,7 @@ export default function App() {
         <LivingWater scenes={scenes.map((s) => (LOW_POWER ? s.srcSm : s.src))} active={scene} reduced={REDUCED} />
       </div>
       {/* 수면 안개 + 그레인 */}
-      <div className="surface-mist fixed inset-0 z-[1] pointer-events-none" />
+      <div ref={mistRef} className="surface-mist fixed inset-0 z-[1] pointer-events-none" />
       <div className="grain fixed inset-0 z-[2] pointer-events-none" aria-hidden="true" />
 
       {/* 전경 — 기포 (하단 위주, 은은하게) */}
@@ -171,7 +155,7 @@ export default function App() {
         </a>
       </nav>
 
-      {/* 3. Hero — 한 화면 높이의 일반 섹션 (스크롤하면 위로 밀려나고 아래 섹션이 영상 위로 올라온다) */}
+      {/* 3. Hero — 한 화면 높이의 일반 섹션. 텍스트는 고정, 배경만 움직인다 */}
       <section id="top" className="relative z-20 h-[100svh] min-h-[640px]">
       <div
         ref={heroRef}
@@ -229,38 +213,6 @@ export default function App() {
         </div>
       </div>
 
-      {/* 장면 선택 — 버튼을 누르면 다른 바다로 전환 */}
-      <div
-        data-scenes
-        className="absolute bottom-6 left-6 md:left-10 z-20 flex flex-col gap-2.5 opacity-0"
-        role="group"
-        aria-label="Background scene"
-      >
-        <p className="font-heading text-[10px] tracking-[0.18em] uppercase text-ocean-50/60">Choose a sea</p>
-        <div className="flex flex-wrap gap-1.5">
-          {scenes.map((s, i) => {
-            const on = i === scene;
-            return (
-              <button
-                key={s.id}
-                type="button"
-                onClick={() => selectScene(i)}
-                aria-pressed={on}
-                className={`group inline-flex items-center gap-2 rounded border px-3.5 py-1.5 font-heading text-[12px] font-medium backdrop-blur-md transition-all duration-300 ${
-                  on
-                    ? 'border-lime/70 bg-lime/90 text-ocean-800'
-                    : 'border-white/20 bg-white/10 text-ocean-50/85 hover:bg-white/20 hover:border-white/35'
-                }`}
-              >
-                <span className={`h-1.5 w-1.5 rounded-full transition-colors ${on ? 'bg-ocean-800' : 'bg-white/60 group-hover:bg-white'}`} />
-                {s.name}
-                <span className="font-body text-[11px] font-normal opacity-70">{s.name_ko}</span>
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Scroll hint */}
       <a
         ref={hintRef}
@@ -272,9 +224,8 @@ export default function App() {
       </a>
       </section>
 
-      {/* 4. 본문 섹션 — 딥오션 배경, 고정된 영상 위로 올라온다 */}
-      <main className="relative z-30 bg-ocean-800 text-ocean-50">
-        <div className="pointer-events-none absolute inset-x-0 -top-40 h-40 bg-gradient-to-b from-transparent to-ocean-800" />
+      {/* 4. 본문 섹션 — 배경은 고정된 LivingWater 가 섹션마다 다른 장면으로 전환 (셰이더에서 어둡게) */}
+      <main className="relative z-30 text-ocean-50 bg-ocean-800/30">
         <ProfileSection />
         <ExperienceSection />
         <VisionSection />

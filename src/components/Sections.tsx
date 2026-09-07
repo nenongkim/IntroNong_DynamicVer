@@ -4,14 +4,14 @@ import { ending, islands, profile, researchInterests, vision } from '../data/con
 /* 공통: 섹션 헤더 (아이브로우 + 세리프 타이틀) */
 function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
   return (
-    <div className="mb-12 md:mb-16">
+    <div className="mb-12 md:mb-16 [text-shadow:0_2px_28px_rgba(0,18,48,0.55)]">
       <p className="font-heading text-[11px] md:text-xs font-medium tracking-[0.18em] uppercase text-ocean-200/80">
         {eyebrow}
       </p>
       <h2 className="mt-3 font-serif text-[2.4rem] md:text-[3.6rem] leading-[1.02] tracking-[-0.01em] text-ocean-50">
         {title}
       </h2>
-      {sub && <p className="mt-4 max-w-[560px] text-ocean-50/70 leading-relaxed break-keep">{sub}</p>}
+      {sub && <p className="mt-4 max-w-[560px] text-ocean-50/80 leading-relaxed break-keep">{sub}</p>}
     </div>
   );
 }

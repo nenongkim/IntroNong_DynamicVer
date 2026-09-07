@@ -30,7 +30,9 @@ legacy/                 v0.1 바닐라 버전 (돌고래 스크롤 씬 5개). �
 - **배경 — LivingWater (WebGL)**: 사용자가 제작한 정지 이미지 4장(`public/assets/scenes/scene-1~4.jpg`, 모바일용 `-sm`)을 프래그먼트 셰이더로 "살아 있는 바닷속"처럼 렌더링한다.
   - 물결 굴절(다층 sin + value noise), 수면 쪽 코스틱 반짝임, 느리게 흔들리는 빛줄기, 비네트
   - **다이브 인**: 로드 후 카메라가 점근적으로 밀고 들어가며(zoom 1→1.11) 가라앉고(drift), 스크롤하면 더 깊이 들어간다. 텍스트는 반대로 가라앉으며 사라진다.
-  - **장면 전환**: 좌하단 "Choose a sea" 버튼 → 두 텍스처를 노이즈 변위로 벌리며 1.6s 디졸브 + 물빛 플래시. 선택은 sessionStorage 에 기억.
+  - **섹션별 장면**: 스크롤로 현재 섹션을 감지해 배경을 자동 전환 (`content.ts` 의 `sectionScenes`: 히어로·Profile → Shallows, Experience → Lagoon, Vision → Coral Reef, Contact → Deep Blue). 전환은 노이즈 변위 디졸브 1.6s.
+  - **가독성**: 히어로를 벗어나면 셰이더 `uDim` 이 1 로 올라가 배경을 어둡고 채도 낮은 딥오션 톤으로 바꾼다(움직임은 유지). 본문 레이어에 `ocean-800/30` 틴트, 섹션 제목에 그림자.
+  - **텍스트는 고정**: 레퍼런스(ai-workflow-agents)처럼 글자에는 패럴랙스·침강이 없고 배경만 움직인다. 등장 애니메이션은 최초 1회.
   - DPR 상한 1.5, 탭 비활성 시 정지. reduced-motion 이면 정지 이미지 + 전환만.
   - 장면 추가/교체: `content.ts` 의 `scenes` 배열과 `public/assets/scenes/` 만 수정.
 - **수면 안개**: 상단 0→68% 구간에 sky-50 그라데이션(`.surface-mist`)을 올려 "수면 근처가 가장 밝다"는 기획 의도를 살리고, 텍스트를 딥블루(sky-800)로 올린다.

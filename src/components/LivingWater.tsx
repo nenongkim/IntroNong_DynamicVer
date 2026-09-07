@@ -34,6 +34,7 @@ uniform float uTime;
 uniform float uZoom;
 uniform float uDrift;
 uniform float uWarp;       // 0 = 정지, 1 = 기본
+uniform float uDim;        // 0 = 원본, 1 = 섹션용 딥오션 톤 (어둡고 채도 낮게)
 uniform vec2  uRes;
 uniform vec2  uImgA;
 uniform vec2  uImgB;
@@ -85,13 +86,19 @@ void main(){
   float ca = noise(uv * vec2(6.0, 3.0) + vec2(t * 0.12, -t * 0.05));
   float cb = noise(uv * vec2(9.0, 5.0) - vec2(t * 0.10, t * 0.07));
   float caus = pow(ca * cb, 1.6);
-  col += vec3(0.85, 0.96, 1.0) * caus * 0.34 * smoothstep(0.25, 1.0, uv.y) * uWarp;
+  float light = 1.0 - 0.55 * uDim;   // 섹션에선 빛 효과를 줄여 글자를 보호
+  col += vec3(0.85, 0.96, 1.0) * caus * 0.34 * smoothstep(0.25, 1.0, uv.y) * uWarp * light;
 
   // 빛줄기
   float ang = uv.x * 11.0 + uv.y * 2.5 + t * 0.12;
   float rays = pow(max(0.0, sin(ang)), 7.0) * 0.06 * smoothstep(0.2, 1.0, uv.y);
   rays += pow(max(0.0, sin(ang * 0.63 + 1.7 - t * 0.05)), 9.0) * 0.05 * smoothstep(0.3, 1.0, uv.y);
-  col += rays * uWarp;
+  col += rays * uWarp * light;
+
+  // 섹션용 딥오션 톤: 어둡게 + 채도 낮게 + sky-800 틴트 (움직임은 그대로 보인다)
+  float lum = dot(col, vec3(0.299, 0.587, 0.114));
+  vec3 dimmed = mix(col, vec3(lum), 0.55) * 0.24 + vec3(0.047, 0.267, 0.486) * 0.22;
+  col = mix(col, dimmed, uDim);
 
   // 비네트
   float vig = smoothstep(1.25, 0.35, length((vUv - 0.5) * vec2(1.0, 1.15)));
@@ -145,7 +152,7 @@ export default function LivingWater({ scenes, active, reduced = false, className
     const U = (n: string) => gl.getUniformLocation(prog, n);
     const u = {
       texA: U('uTexA'), texB: U('uTexB'), progress: U('uProgress'), time: U('uTime'), zoom: U('uZoom'),
-      drift: U('uDrift'), warp: U('uWarp'), res: U('uRes'), imgA: U('uImgA'), imgB: U('uImgB'), mouse: U('uMouse'),
+      drift: U('uDrift'), warp: U('uWarp'), dim: U('uDim'), res: U('uRes'), imgA: U('uImgA'), imgB: U('uImgB'), mouse: U('uMouse'),
     };
 
     /* ---------- textures ---------- */
@@ -189,6 +196,7 @@ export default function LivingWater({ scenes, active, reduced = false, className
     const TRANS = 1.6;
     let mx = 0, my = 0, tmx = 0, tmy = 0;
     let scrollDepth = 0;
+    let dim = 0, dimTarget = 0;   // 히어로를 벗어나면 1 로
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -205,6 +213,7 @@ export default function LivingWater({ scenes, active, reduced = false, className
     };
     const onScroll = () => {
       scrollDepth = Math.min(1, window.scrollY / window.innerHeight);
+      dimTarget = Math.min(1, Math.max(0, (window.scrollY - window.innerHeight * 0.15) / (window.innerHeight * 0.7)));
     };
     const onVis = () => {
       if (document.hidden) { running = false; cancelAnimationFrame(raf); }
@@ -241,7 +250,9 @@ export default function LivingWater({ scenes, active, reduced = false, className
 
       mx += (tmx - mx) * 0.04;
       my += (tmy - my) * 0.04;
+      dim += (dimTarget - dim) * 0.08;
 
+      gl.uniform1f(u.dim, dim);
       gl.uniform1f(u.time, reduced ? 0 : t);
       gl.uniform1f(u.zoom, zoom);
       gl.uniform1f(u.drift, drift);

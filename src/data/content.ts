@@ -47,6 +47,15 @@ export const scenes: Scene[] = [
   { id: 'reef', name: 'Coral Reef', name_ko: '산호초', src: 'assets/scenes/scene-4.jpg', srcSm: 'assets/scenes/scene-4-sm.jpg' },
 ];
 
+/* 섹션(id) → 배경 장면 index. 히어로(top)는 Profile 과 같은 장면 */
+export const sectionScenes: Record<string, number> = {
+  top: 0,        // Shallows
+  profile: 0,    // Shallows
+  experience: 1, // Lagoon
+  vision: 3,     // Coral Reef
+  contact: 2,    // Deep Blue
+};
+
 export const researchInterests = [
   'Data-driven service planning & business analytics',
   'Database design & modeling',
