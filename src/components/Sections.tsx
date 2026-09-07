@@ -1,5 +1,5 @@
 import { ArrowUpRight, Mail, Phone } from 'lucide-react';
-import { ending, islands, profile, researchInterests, vision } from '../data/content';
+import { certifications, ending, islands, profile, researchInterests, vision } from '../data/content';
 
 /* 공통: 섹션 헤더 (아이브로우 + 세리프 타이틀) */
 function SectionHead({ eyebrow, title, sub }: { eyebrow: string; title: string; sub?: string }) {
@@ -70,6 +70,33 @@ export function ProfileSection() {
               Spatial Media Research Laboratory · Spatial Content Research Division · Spatial Intelligence
               Research Section · Daejeon, Korea
             </p>
+          </Card>
+
+          <Card className="md:col-span-12">
+            <div className="flex items-baseline justify-between gap-4">
+              <p className="font-heading text-[11px] font-semibold tracking-[0.14em] uppercase text-ocean-200">
+                Certifications
+              </p>
+              <span className="font-heading text-xs tracking-[0.08em] text-ocean-200/80">
+                자격증 · {certifications.length}
+              </span>
+            </div>
+            <ul className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+              {certifications.map((c) => (
+                <li
+                  key={c.name}
+                  className="flex flex-col gap-2 rounded-[16px] border border-white/10 bg-white/[0.04] p-4"
+                >
+                  <span className="inline-flex w-fit items-center gap-1.5 rounded bg-ocean-50/10 px-2 py-0.5 font-heading text-[10px] font-semibold tracking-[0.08em] uppercase text-ocean-50/85">
+                    <span className="h-1 w-1 rounded-full bg-lime" />
+                    {c.area}
+                  </span>
+                  <p className="font-heading text-[15px] font-semibold leading-snug text-ocean-50">{c.name}</p>
+                  <p className="text-[13px] text-ocean-50/80">{c.name_ko}</p>
+                  <p className="mt-auto text-[11.5px] leading-relaxed text-ocean-50/50">{c.issuer}</p>
+                </li>
+              ))}
+            </ul>
           </Card>
 
           <Card className="md:col-span-12">

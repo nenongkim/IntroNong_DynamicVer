@@ -56,6 +56,20 @@ export const sectionScenes: Record<string, number> = {
   contact: 2,    // Deep Blue
 };
 
+/* 자격증 */
+export interface Certification {
+  name: string;      // 영문/약칭
+  name_ko: string;   // 정식 한글명
+  issuer: string;    // 발급 기관
+  area: string;      // 분야 태그
+}
+export const certifications: Certification[] = [
+  { name: 'ADsP', name_ko: '데이터 분석 준전문가', issuer: 'Korea Data Agency (한국데이터산업진흥원)', area: 'Data Analytics' },
+  { name: 'SQLD', name_ko: 'SQL 개발자', issuer: 'Korea Data Agency (한국데이터산업진흥원)', area: 'Database' },
+  { name: 'Certified Distribution Manager, Level 2', name_ko: '유통관리사 2급', issuer: 'Korea Chamber of Commerce and Industry (대한상공회의소)', area: 'Business' },
+  { name: 'AI-POT Level 1', name_ko: 'AI 프롬프트 활용 능력 1급', issuer: 'AI Prompt Optimization Test', area: 'AI' },
+];
+
 export const researchInterests = [
   'Data-driven service planning & business analytics',
   'Database design & modeling',
