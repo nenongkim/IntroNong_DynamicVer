@@ -111,25 +111,11 @@ export default function App() {
     slideRefs.current.forEach((el, i) => { if (el) gsap.set(el, { autoAlpha: i === indexRef.current ? 1 : 0 }); });
   }, []);
 
-  /* 키보드 · 휠 · 스와이프 · 해시 */
+  /* 키보드 · 스와이프 · 해시 (휠은 화면 안 스크롤 전용, 화면 전환에 쓰지 않는다) */
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'ArrowRight' || e.key === 'PageDown') goTo(indexRef.current + 1);
       else if (e.key === 'ArrowLeft' || e.key === 'PageUp') goTo(indexRef.current - 1);
-    };
-    let wheelLock = 0;
-    const onWheel = (e: WheelEvent) => {
-      // 화면 안 스크롤 영역이 아직 스크롤할 수 있으면 화면 전환하지 않는다
-      const scroller = (e.target as HTMLElement).closest<HTMLElement>('[data-scroll]');
-      if (scroller) {
-        const canDown = scroller.scrollTop + scroller.clientHeight < scroller.scrollHeight - 2;
-        const canUp = scroller.scrollTop > 2;
-        if ((e.deltaY > 0 && canDown) || (e.deltaY < 0 && canUp)) return;
-      }
-      const now = Date.now();
-      if (now < wheelLock || Math.abs(e.deltaY) < 24) return;
-      wheelLock = now + SLIDE_MS + 350;
-      goTo(indexRef.current + (e.deltaY > 0 ? 1 : -1));
     };
     let tx = 0, ty = 0;
     const onTouchStart = (e: TouchEvent) => { tx = e.touches[0].clientX; ty = e.touches[0].clientY; };
@@ -140,13 +126,11 @@ export default function App() {
     };
     const onHash = () => goTo(indexOfHash());
     window.addEventListener('keydown', onKey);
-    window.addEventListener('wheel', onWheel, { passive: true });
     window.addEventListener('touchstart', onTouchStart, { passive: true });
     window.addEventListener('touchend', onTouchEnd, { passive: true });
     window.addEventListener('hashchange', onHash);
     return () => {
       window.removeEventListener('keydown', onKey);
-      window.removeEventListener('wheel', onWheel);
       window.removeEventListener('touchstart', onTouchStart);
       window.removeEventListener('touchend', onTouchEnd);
       window.removeEventListener('hashchange', onHash);
