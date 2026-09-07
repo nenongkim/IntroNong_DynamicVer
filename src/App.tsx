@@ -264,10 +264,10 @@ export default function App() {
           ref={hintRef}
           href="#profile"
           onClick={(e) => { e.preventDefault(); goTo(1); }}
-          className="absolute bottom-7 left-1/2 -translate-x-1/2 flex items-center gap-2 font-heading text-[11px] tracking-[0.16em] uppercase text-ocean-50/70 hover:text-ocean-50 opacity-0"
+          className="absolute bottom-8 left-1/2 -translate-x-1/2 inline-flex items-center gap-2.5 rounded border border-white/50 bg-white/45 backdrop-blur-md px-5 py-2.5 font-heading text-[13px] font-semibold tracking-[0.18em] uppercase text-ocean-800 shadow-[0_8px_24px_-10px_rgba(12,68,124,0.5)] transition-all duration-300 hover:bg-white/65 hover:scale-[1.03] opacity-0"
         >
           {hero.scrollHint}
-          <ArrowRight size={12} className="hint-nudge" />
+          <ArrowRight size={15} strokeWidth={2.2} className="hint-nudge" />
         </a>
       </section>
 
