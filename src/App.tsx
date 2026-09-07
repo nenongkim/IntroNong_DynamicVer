@@ -213,11 +213,12 @@ export default function App() {
         ref={(el) => { slideRefs.current[0] = el; }}
         id="top"
         aria-hidden={index !== 0}
-        className={`absolute inset-0 z-20 ${index === 0 ? '' : 'pointer-events-none'}`}
+        className={`absolute inset-0 z-20 flex items-center ${index === 0 ? '' : 'pointer-events-none'}`}
       >
+        {/* flex 로 세로 중앙 정렬 (transform 은 gsap 이 덮어쓸 수 있어 쓰지 않는다). mb 는 네비 높이를 감안한 시각 보정 */}
         <div
           ref={heroRef}
-          className="absolute left-0 right-0 top-1/2 -translate-y-[52%] px-6 md:px-10 opacity-0"
+          className="relative w-full px-6 md:px-10 mb-[5vh] opacity-0"
         >
           <div className="hero-glow pointer-events-none absolute left-1/2 top-1/2 -z-10 h-[150%] w-[min(120vw,1400px)] -translate-x-1/2 -translate-y-1/2" aria-hidden="true" />
           <div className="mx-auto max-w-[1180px] text-center">
