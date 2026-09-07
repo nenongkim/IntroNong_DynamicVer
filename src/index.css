@@ -5,8 +5,7 @@
 @tailwind components;
 @tailwind utilities;
 
-html { scroll-behavior: smooth; }
-@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+html, body { height: 100%; overflow: hidden; } /* 세로 스크롤 대신 좌우 화면 전환 */
 
 body {
   font-family: 'Pretendard Variable', Pretendard, Inter, system-ui, sans-serif;
@@ -109,7 +108,18 @@ body {
   50%      { transform: translateY(6px); }
 }
 .hint-bounce { animation: hint-bounce 2s ease-in-out infinite; }
+@keyframes hint-nudge {
+  0%, 100% { transform: translateX(0); }
+  50%      { transform: translateX(5px); }
+}
+.hint-nudge { animation: hint-nudge 2s ease-in-out infinite; }
 
 @media (prefers-reduced-motion: reduce) {
-  .hint-bounce { animation: none; }
+  .hint-bounce, .hint-nudge { animation: none; }
 }
+
+/* ---------- 화면 내부 스크롤 (넘칠 때만) — 얇은 스크롤바 ---------- */
+.scroll-slim { scrollbar-width: thin; scrollbar-color: rgba(230, 241, 251, 0.25) transparent; }
+.scroll-slim::-webkit-scrollbar { width: 6px; }
+.scroll-slim::-webkit-scrollbar-thumb { background: rgba(230, 241, 251, 0.25); border-radius: 999px; }
+.scroll-slim::-webkit-scrollbar-track { background: transparent; }

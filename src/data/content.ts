@@ -29,7 +29,7 @@ export const hero = {
   tagline: '데이터로 서비스를 설계하고, 사람의 목소리를 듣는 사람',
   primaryCta: 'Explore my journey',
   secondaryCta: 'Download CV',
-  scrollHint: 'scroll to dive in',
+  scrollHint: 'dive in',
 } as const;
 
 /* 히어로 배경 장면 (사용자 제작 이미지, public/assets/scenes) */
@@ -67,7 +67,7 @@ export const certifications: Certification[] = [
   { name: 'ADsP', name_ko: '데이터 분석 준전문가', issuer: 'Korea Data Agency (한국데이터산업진흥원)', area: 'Data Analytics' },
   { name: 'SQLD', name_ko: 'SQL 개발자', issuer: 'Korea Data Agency (한국데이터산업진흥원)', area: 'Database' },
   { name: 'Certified Distribution Manager, Level 2', name_ko: '유통관리사 2급', issuer: 'Korea Chamber of Commerce and Industry (대한상공회의소)', area: 'Business' },
-  { name: 'AI-POT Level 1', name_ko: 'AI 프롬프트 활용 능력 1급', issuer: 'AI Prompt Optimization Test', area: 'AI' },
+  { name: 'AI-POT Level 1', name_ko: 'AI 프롬프트 활용 능력 1급', issuer: 'Korea Productivity Center (한국생산성본부)', area: 'AI' },
 ];
 
 export const researchInterests = [

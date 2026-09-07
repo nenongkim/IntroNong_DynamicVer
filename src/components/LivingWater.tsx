@@ -14,6 +14,8 @@ import { useEffect, useRef } from 'react';
 interface Props {
   scenes: string[];
   active: number;
+  /** 0 = 원본 밝기(히어로), 1 = 딥오션 톤(본문 화면) */
+  dim?: number;
   reduced?: boolean;
   className?: string;
 }
@@ -108,13 +110,17 @@ void main(){
 }
 `;
 
-export default function LivingWater({ scenes, active, reduced = false, className = '' }: Props) {
+export default function LivingWater({ scenes, active, dim: dimProp = 0, reduced = false, className = '' }: Props) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const activeRef = useRef(active);
+  const dimRef = useRef(dimProp);
 
   useEffect(() => {
     activeRef.current = active;
   }, [active]);
+  useEffect(() => {
+    dimRef.current = dimProp;
+  }, [dimProp]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -195,8 +201,7 @@ export default function LivingWater({ scenes, active, reduced = false, className
     let transStart = 0;
     const TRANS = 1.6;
     let mx = 0, my = 0, tmx = 0, tmy = 0;
-    let scrollDepth = 0;
-    let dim = 0, dimTarget = 0;   // 히어로를 벗어나면 1 로
+    let dim = dimRef.current;      // prop 을 부드럽게 따라간다
 
     const resize = () => {
       const dpr = Math.min(window.devicePixelRatio || 1, 1.5);
@@ -210,10 +215,6 @@ export default function LivingWater({ scenes, active, reduced = false, className
     const onMove = (e: MouseEvent) => {
       tmx = e.clientX / window.innerWidth - 0.5;
       tmy = -(e.clientY / window.innerHeight - 0.5);
-    };
-    const onScroll = () => {
-      scrollDepth = Math.min(1, window.scrollY / window.innerHeight);
-      dimTarget = Math.min(1, Math.max(0, (window.scrollY - window.innerHeight * 0.15) / (window.innerHeight * 0.7)));
     };
     const onVis = () => {
       if (document.hidden) { running = false; cancelAnimationFrame(raf); }
@@ -245,12 +246,12 @@ export default function LivingWater({ scenes, active, reduced = false, className
       // 다이브 인: 점근적 줌 + 침강 + 호흡, 스크롤로 더 깊이
       const k = 1 - Math.exp(-t / 16);
       const breathe = Math.sin(t * 0.18) * 0.006;
-      const zoom = reduced ? 1.04 : 1.0 + 0.11 * k + breathe + scrollDepth * 0.14 + Math.sin(progress * Math.PI) * 0.03;
-      const drift = reduced ? 0 : -0.035 * k - scrollDepth * 0.05;
+      const zoom = reduced ? 1.04 : 1.0 + 0.11 * k + breathe + dim * 0.06 + Math.sin(progress * Math.PI) * 0.03;
+      const drift = reduced ? 0 : -0.035 * k - dim * 0.03;
 
       mx += (tmx - mx) * 0.04;
       my += (tmy - my) * 0.04;
-      dim += (dimTarget - dim) * 0.08;
+      dim += (dimRef.current - dim) * 0.06;
 
       gl.uniform1f(u.dim, dim);
       gl.uniform1f(u.time, reduced ? 0 : t);
@@ -270,7 +271,6 @@ export default function LivingWater({ scenes, active, reduced = false, className
     resize();
     window.addEventListener('resize', resize);
     window.addEventListener('mousemove', onMove, { passive: true });
-    window.addEventListener('scroll', onScroll, { passive: true });
     document.addEventListener('visibilitychange', onVis);
 
     // 첫 장면 → 표시 후 나머지 프리로드
@@ -289,7 +289,6 @@ export default function LivingWater({ scenes, active, reduced = false, className
       cancelAnimationFrame(raf);
       window.removeEventListener('resize', resize);
       window.removeEventListener('mousemove', onMove);
-      window.removeEventListener('scroll', onScroll);
       document.removeEventListener('visibilitychange', onVis);
       // 컨텍스트는 버리지 않는다 (같은 canvas 로 재마운트되는 StrictMode 에서 죽은 컨텍스트를 받게 됨).
       // GPU 리소스만 해제.
